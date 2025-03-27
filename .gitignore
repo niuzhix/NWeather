@@ -1,0 +1,5 @@
+/.gitigonre
+Temp/
+.vscode/
+/NWeather.code-workspace
+/Scripts/__pycache__/

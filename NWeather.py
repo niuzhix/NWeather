@@ -6,29 +6,19 @@
 @LastEditors  : Niu zhixin
 """
 
-from tkinter import Tk, Canvas
+from tkinter import Tk, Entry, Button
 from win11toast import ToastNotification
 from tkinter import messagebox
 import gettext
 from configparser import ConfigParser
 import os
-from Scripts.get_weather import get_weather, get_city
+from Scripts.get_weather import get_weather, get_city_data
 from Scripts.createJWT import createJWT
 from Scripts.Image_load import load
+from Scripts.Canvas import RoundCanvas as Canvas
 import ctypes
 
 ctypes.windll.shcore.SetProcessDpiAwareness(2)
-
-try:
-    with open(
-        f"{os.getcwd()}\\Lib\\ed25519-private.pem", encoding="utf-8"
-    ) as private_key_file:
-        PRIVATE_KEY = private_key_file.read()
-    PROJECT_ID = "29KVBFNRAX"
-    KEY_ID = "CHPN48PMNJ"
-    JWT = createJWT(PRIVATE_KEY, PROJECT_ID, KEY_ID)
-except Exception as e:
-    os._exit(-1)
 
 try:
     ini_cursor = ConfigParser()
@@ -72,44 +62,42 @@ class NWeather:
 
     def __menu_page__(self):
         menu = self.cmenu
-        city_inputs_left_round = menu.create_arc(
-            20, 75, 70, 125, start=90, extent=180, fill="#333333", outline="#333333"
-        )
-        city_inputs_bg = menu.create_rectangle(
-            44, 75, 356, 125, fill="#333333", outline="#333333"
-        )
-        city_inputs_right_round = menu.create_arc(
-            330, 75, 380, 125, start=-90, extent=180, fill="#333333", outline="#333333"
+        city_inputs_bg = menu.create_round_rect(
+            24, 75, 376, 125, fill="#333333"
         )
         menu.create_image(
-            60,
+            40,
             100,
             anchor="w",
-            image=load(self.master, f"{os.getcwd()}\\Lib\\search.png", (30, 30)),
+            image=load(self.master, f"{os.getcwd()}\\Lib\\search.png", (20, 20)),
         )
-        city_inputs = menu.create_text(
-            100, 100, anchor="w", text="输入以查找城市...", font=FONT, fill="#d0d0d0"
+        self.city_inputs = Entry(menu, relief='flat',font=FONT,bg='#333333',fg='#ffffff',validate='key',validatecommand=lambda:self.update_city_data())
+        self.city_inputs.place(x=61,y=100,anchor='w')
+        
+        
+        self.weatherButton = menu.create_round_rect(
+            10, 140, 389, 200, radius=10, fill="#0b4a9b"
         )
-
-        self.weatherButton = menu.create_rectangle(
-            0, 140, 399, 200, fill="#0b4a9b", outline="#0b4a9b"
+        self.settingButton = menu.create_round_rect(
+            10, 211, 389, 271, radius=10, fill="#131313"
         )
-        self.settingButton = menu.create_rectangle(
-            0, 201, 399, 261, fill="#131313", outline="#131313"
-        )
-        self.aboutButton = menu.create_rectangle(
-            0, 262, 399, 322, fill="#131313", outline="#131313"
-        )
-        menu.create_text(
-            30, 170, text=_("天气预报"), anchor="w", font=FONT, fill="#ffffff"
+        self.aboutButton = menu.create_round_rect(
+            10, 282, 389, 342, radius=10, fill="#131313"
         )
         menu.create_text(
-            20, 231, text=_("应用设置"), anchor="w", font=FONT, fill="#ffffff"
+            20, 170, text=_("天气预报"), anchor="w", font=FONT, fill="#ffffff"
         )
         menu.create_text(
-            20, 292, text=_("关于应用"), anchor="w", font=FONT, fill="#ffffff"
+            20, 241, text=_("应用设置"), anchor="w", font=FONT, fill="#ffffff"
         )
+        menu.create_text(
+            20, 312, text=_("关于应用"), anchor="w", font=FONT, fill="#ffffff"
+        )
+        
+        self.city_show = menu.create_round_rect(24,135,376,535,radius=10,fill="#4c545a",state="hidden")
+    
         menu.bind("<Button-1>", self.on_menu_click)
+        menu.bind()
 
     def __weather_pages__(self):
         pass
@@ -120,22 +108,27 @@ class NWeather:
     def on_menu_click(self, events):
         if 140 < events.y < 200:
             self.menuFocus = "weather"
-            self.cmenu.itemconfig(self.weatherButton, fill="#0b4a9b", outline="#0b4a9b")
-            self.cmenu.itemconfig(self.settingButton, fill="#131313", outline="#131313")
-            self.cmenu.itemconfig(self.aboutButton, fill="#131313", outline="#131313")
-        elif 201 < events.y < 261:
+            self.cmenu.set(self.weatherButton, fill="#0b4a9b")
+            self.cmenu.set(self.settingButton, fill="#131313")
+            self.cmenu.set(self.aboutButton, fill="#131313")
+        elif 211 < events.y < 271:
             self.menuFocus = "setting"
-            self.cmenu.itemconfig(self.weatherButton, fill="#131313", outline="#131313")
-            self.cmenu.itemconfig(self.settingButton, fill="#0b4a9b", outline="#0b4a9b")
-            self.cmenu.itemconfig(self.aboutButton, fill="#131313", outline="#131313")
-        elif 262 < events.y < 322:
+            self.cmenu.set(self.weatherButton, fill="#131313")
+            self.cmenu.set(self.settingButton, fill="#0b4a9b")
+            self.cmenu.set(self.aboutButton, fill="#131313")
+        elif 282 < events.y < 342:
             self.menuFocus = "about"
-            self.cmenu.itemconfig(self.weatherButton, fill="#131313", outline="#131313")
-            self.cmenu.itemconfig(self.settingButton, fill="#131313", outline="#131313")
-            self.cmenu.itemconfig(self.aboutButton, fill="#0b4a9b", outline="#0b4a9b")
+            self.cmenu.set(self.weatherButton, fill="#131313")
+            self.cmenu.set(self.settingButton, fill="#131313")
+            self.cmenu.set(self.aboutButton, fill="#0b4a9b")
 
     def update_weather_data(self):
         city = self.city_choose.get()
+    
+    def update_city_data(self):
+        city_input = self.city_inputs.get()
+        city_list = get_city_data(city_input)
+        print(city_list)
 
 
 def main():

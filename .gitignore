@@ -1,5 +1,6 @@
-/.gitigonre
+/.gitignore
 Temp/
 .vscode/
 /NWeather.code-workspace
 /Scripts/__pycache__/
+/Scripts/ed25519-private.pem
